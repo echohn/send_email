@@ -55,9 +55,16 @@ module SendEmail
 				smtp.send_mail(mail_header + EOL + @msg,@from,[@to,@cc,@bcc].compact)
 			end
 		end
+
+		def content
+			"Header:\n" + mail_header + "\n\n" + "MSG:\n" + @msg
+		end
+
 		private
- 
+
+
 		def subject_encode
+			# TODO: Other char type . 
  			@subject = "=?UTF-8?B?" + [@subject].pack("m").chomp + "?="
  		end
 
@@ -70,32 +77,34 @@ module SendEmail
 		end
 
 		def txt_header
+			# TODO: Other char type . 			
 			"MIME-Version: 1.0" + EOL +
-			"Content-type: text/plain" + EOL +
+			"Content-type: text/plain; charset=utf-8" + EOL +
 			"Content-Transfer-Encoding:8bit" + EOL
 		end
 
 		def html_header
+			# TODO: Other char type . 
 			"MIME-Version: 1.0" + EOL +
-			"Content-type: text/html" + EOL +
+			"Content-type: text/html; charset=utf-8" + EOL +
 			"Content-Transfer-Encoding:8bit" + EOL
 		end
 
-		def attachement_header
-			"MIME-Version: 1.0" + EOL +
-			"Content-type: multipart/mixed; boundary=#{Marker}" + EOL +
-			"--#{Marker}" + EOL	
-		end	
-
-		def have_attachement?
-			!@attachement.nil?
-		end
-		
 		def mail_header
 			mail_header = have_attachement? ? header + attachement_header : header
 			mail_header += @format.upcase == 'HTML' ? html_header  : txt_header 
 			mail_header
 		end
+
+		def have_attachement?
+			!@attachement.nil?
+		end
+		
+		def attachement_header
+			"MIME-Version: 1.0" + EOL +
+			"Content-type: multipart/mixed; boundary=#{Marker}" + EOL +
+			"--#{Marker}" + EOL	
+		end	
 
 		def attachement_read
 			@attachement_content = []
@@ -114,17 +123,14 @@ module SendEmail
 		end
 
 		def attachement_body
-			@msg += EOL + "--#{Marker}" + EOL 
+			@msg += EOL + EOL + "--#{Marker}" + EOL 
 			@attachement.each_index do |i|
-				@msg += "Content-type: multipart/mixed; name=\"#{@attachement_basename[i]}\"" + EOL +
+				@msg += "Content-type: application/octet-stream; name=\"#{@attachement_basename[i]}\"" + EOL +
 				"Content-Transfer-Encoding:base64" + EOL +
 				"Content-Disposition: attachement; filename=#{@attachement_basename[i]}" + EOL + EOL +
 				"#{@attachement_encode[i]}" + EOL +
 				"--#{Marker}--" + EOL
 			end
 		end
-
-
-
 	end
 end
